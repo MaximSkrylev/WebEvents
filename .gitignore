@@ -1,0 +1,20 @@
+# виртуальное окружение
+venv/
+
+# byte-code Python
+__pycache__/
+*.py[cod]
+
+# настройки IDE
+.idea/
+.vscode/
+
+# системные мусорные файлы
+.DS_Store
+Thumbs.db
+
+# файлы окружения
+.env
+
+# зависимости
+*.egg-info/
