@@ -1,0 +1,13 @@
+<!-- templates/two_factor.html -->
+{% extends "base.html" %}
+{% block content %}
+<h2>Двухфакторная аутентификация</h2>
+<p>На вашу почту отправлен код из 6 цифр. Введите его:</p>
+<form method="post">
+  <div class="mb-3">
+    <label for="code" class="form-label">Код:</label>
+    <input type="text" name="code" id="code" class="form-control" maxlength="6" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Подтвердить</button>
+</form>
+{% endblock %}

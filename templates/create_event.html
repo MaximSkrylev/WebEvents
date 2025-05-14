@@ -1,0 +1,396 @@
+<!-- File: create_event.html -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Создание мероприятия</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    body {
+      background-color: #00887A;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    .main-container {
+      background-color: #ffffff;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .navbar {
+      background-color: #FCAF83 !important;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+    }
+    .slogan span:first-child {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .slogan {
+      display: inline-block;
+      font-family: 'Arial', sans-serif;
+      color: #00887A;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-left: 30px !important;
+    }
+    .btn-custom {
+      background-color: #00887A;
+      border-color: #00887A;
+      color: #fff;
+    }
+    h1, h2, h3 {
+      font-family: 'Bahnschrift', sans-serif;
+      color: #00887A;
+    }
+    /* Стили для контейнера автодополнения */
+    #autocomplete-list {
+      position: absolute;
+      z-index: 1000;
+      background-color: #fff;
+      width: 100%;
+      border: 1px solid #ddd;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #autocomplete-list .autocomplete-item {
+      padding: 10px;
+      cursor: pointer;
+    }
+    #autocomplete-list .autocomplete-item:hover {
+      background-color: #e9e9e9;
+    }
+    /* Стили для панели тегов */
+    #tag-panel {
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      max-width: 600px;
+    }
+    #selected-tags .badge {
+      margin-right: 5px;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+    .modal-backdrop.show {
+      opacity: 0.5;
+    }
+    .bottom-padding {
+      height: 50px;
+    }
+    .bottom-description {
+      background-color: #FCAF83;
+      height: 100px;
+    }
+    #tag-list {
+    max-height: 150px;    /* задаёт максимальную высоту панели со списком */
+    max-width: 600px;
+    overflow-y: auto;     /* вертикальная прокрутка при переполнении */
+  }
+  </style>
+    <script>
+    const CREATE_TAG_URL = "{{ url_for('create_tag') }}";
+    </script>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+          <img src="{{ url_for('static', filename='images/mylogo.png') }}" alt="Логотип" style="max-height: 100px;">
+          <span class="ms-2 slogan" style="font-family: 'Bahnschrift', sans-serif;">
+            <span style="display: block;">EventPoint</span>
+            <span style="display: block;">Наука, образование, информационные технологии</span>
+          </span>
+        </a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Личный кабинет</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Выйти</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <h1>Создание нового мероприятия</h1>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert alert-warning">
+            <ul>
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('create_event') }}" method="post" enctype="multipart/form-data" autocomplete="off">
+        <!-- Прочие поля формы -->
+        <div class="mb-3">
+          <label for="title" class="form-label">Название мероприятия:</label>
+          <input type="text" class="form-control" name="title" id="title" required>
+        </div>
+        <div class="mb-3">
+          <label for="description" class="form-label">Краткое описание (в том числе медиаконтент):</label>
+          <textarea class="form-control" name="description" id="description" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="category" class="form-label">Сфера мероприятия:</label>
+          <select class="form-select" name="category" id="category" required style="max-width: 320px;">
+            <option value="" disabled selected>Выберите сферу</option>
+            <option value="Наука">Наука</option>
+            <option value="Образование">Образование</option>
+            <option value="Информационные технологии">Информационные технологии</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="event_format" class="form-label">Формат мероприятия:</label>
+          <select class="form-select" name="event_format" id="event_format" required style="max-width: 200px;">
+            <option value="online">Онлайн</option>
+            <option value="offline">Офлайн</option>
+          </select>
+        </div>
+        <div class="mb-3 position-relative">
+          <label for="location" class="form-label">Место проведения (адрес или город):</label>
+          <input type="text" class="form-control" name="location" id="location" required>
+          <div id="autocomplete-list"></div>
+        </div>
+        <div class="mb-3">
+          <label for="event_date" class="form-label">Дата и время:</label>
+          <input type="text" class="form-control" name="event_date" id="event_date" placeholder="Выберите дату и время" required style="max-width: 320px;">
+        </div>
+        <div class="mb-3">
+          <label for="duration" class="form-label">Продолжительность (в минутах):</label>
+          <input type="number" class="form-control" name="duration" id="duration" style="max-width: 100px;">
+        </div>
+        <div class="mb-3">
+          <label for="contacts" class="form-label">Контакты/информационные ресурсы организатора:</label>
+          <input type="text" class="form-control" name="contacts" id="contacts">
+        </div>
+
+        <!-- Панель работы с тегами -->
+        <div class="mb-3">
+          <label class="form-label">Теги</label>
+          <div id="tag-panel">
+            <div><strong>Выбранные теги:</strong></div>
+            <div id="selected-tags" class="mb-2"></div>
+            <div class="d-flex">
+              <input type="text" id="tag-search" class="form-control me-2" placeholder="Поиск тегов">
+              <button type="button" id="add-tag-btn" class="btn btn-outline-secondary" style="display:none;">+</button>
+            </div >
+            <div id="tag-list" class="list-group mt-2"></div>
+          </div>
+          <!-- Скрытое поле для передачи тегов на сервер -->
+          <input type="hidden" name="selected_tags[]" id="tags-input">
+        </div>
+
+        <!-- Модальное окно для создания нового тега -->
+        <div class="modal fade" id="newTagModal" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Новый тег</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <input type="text" id="new-tag-name" class="form-control" placeholder="Название тега">
+              </div>
+              <div class="modal-footer">
+                <button type="button" id="save-new-tag" class="btn btn-primary">Добавить</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="images" class="form-label">Изображения (одно или несколько):</label>
+          <input type="file" class="form-control" name="images" id="images" multiple>
+        </div>
+        <button type="submit" class="btn btn-custom">Создать мероприятие</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="bottom-padding"></div>
+  <div class="bottom-description"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // flatpickr
+    flatpickr("#event_date", {
+      enableTime: true,
+      time_24hr: true,
+      dateFormat: "Y-m-d H:i"
+    });
+
+    // Автодополнение адресов
+    function clearAutocomplete() {
+      document.getElementById('autocomplete-list').innerHTML = '';
+    }
+    function debounce(func, delay) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+    function fetchAddresses(query) {
+      const list = document.getElementById('autocomplete-list');
+      if (!query || query.length < 3) { clearAutocomplete(); return; }
+      fetch('/geocode?q=' + encodeURIComponent(query))
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(data => {
+          clearAutocomplete();
+          const members = data.response?.GeoObjectCollection?.featureMember || [];
+          if (!members.length) {
+            const el = document.createElement('div');
+            el.className = 'autocomplete-item';
+            el.textContent = 'Нет результатов';
+            list.append(el);
+            return;
+          }
+          members.forEach(m => {
+            const addr = m.GeoObject.metaDataProperty.GeocoderMetaData.text;
+            const el = document.createElement('div');
+            el.className = 'autocomplete-item';
+            el.textContent = addr;
+            el.onclick = () => {
+              document.getElementById('location').value = addr;
+              clearAutocomplete();
+            };
+            list.append(el);
+          });
+        })
+        .catch(err => { console.error('Autocomplete error', err); clearAutocomplete(); });
+    }
+    document.getElementById('location').addEventListener('input', debounce(e => fetchAddresses(e.target.value), 800));
+    document.addEventListener('click', e => {
+      if (!document.getElementById('location').contains(e.target)) {
+        clearAutocomplete();
+      }
+    });
+
+    // Работа с тегами
+    let allTags = {{ all_tags|tojson }};  // список всех тегов передаётся из контроллера
+    let selectedTags = [];
+
+    const searchInput = document.getElementById('tag-search');
+    const listContainer = document.getElementById('tag-list');
+    const selectedContainer = document.getElementById('selected-tags');
+    const hiddenInput = document.getElementById('tags-input');
+    const addBtn = document.getElementById('add-tag-btn');
+    const newTagModal = new bootstrap.Modal(document.getElementById('newTagModal'));
+    const newTagName = document.getElementById('new-tag-name');
+
+    function renderSelected() {
+      selectedContainer.innerHTML = '';
+      selectedTags.forEach(tag => {
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-success';
+        badge.textContent = tag + ' ×';
+        badge.onclick = () => {
+          selectedTags = selectedTags.filter(t => t !== tag);
+          renderSelected();
+          updateHidden();
+        };
+        selectedContainer.append(badge);
+      });
+      updateHidden();
+    }
+
+    function updateHidden() {
+      hiddenInput.value = selectedTags.join(', ');
+    }
+
+    function renderList(matches) {
+      listContainer.innerHTML = '';
+      if (matches.length === 0) {
+        const li = document.createElement('div');
+        li.className = 'list-group-item';
+        li.textContent = 'нет результатов';
+        listContainer.append(li);
+        addBtn.style.display = 'inline-block';
+      } else {
+        addBtn.style.display = 'none';
+        matches.forEach(tag => {
+          const li = document.createElement('button');
+          li.type = 'button';
+          li.className = 'list-group-item list-group-item-action';
+          li.textContent = tag;
+          li.onclick = () => {
+            if (!selectedTags.includes(tag)) {
+              selectedTags.push(tag);
+              renderSelected();
+            }
+          };
+          listContainer.append(li);
+        });
+      }
+    }
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim().toLowerCase();
+      const matches = q
+        ? allTags.filter(t => t.toLowerCase().includes(q))
+        : allTags.slice();
+      renderList(matches);
+    });
+
+    // Открыть окно создания нового тега
+    addBtn.addEventListener('click', () => {
+      newTagName.value = '';
+      newTagModal.show();
+    });
+
+   // Сохранить новый тег
+  document.getElementById('save-new-tag').addEventListener('click', () => {
+    const name = newTagName.value.trim();
+    if (!name) {
+      return alert('Введите имя тега');
+    }
+    if (allTags.includes(name)) {
+      return alert('Такой тег уже есть');
+    }
+
+    fetch(CREATE_TAG_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ name: name })
+    })
+    .then(response => {
+      if (!response.ok) {
+        // попробуем прочитать текст ошибки
+        return response.json()
+          .then(err => { throw new Error(err.message||'Ошибка при создании тега'); });
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Всё ок, добавляем новый тег в список
+      allTags.push(data.tag.name);
+      newTagModal.hide();
+      // Даем пользователю сразу его выбрать
+      searchInput.value = data.tag.name;
+      searchInput.dispatchEvent(new Event('input'));
+    })
+    .catch(err => {
+      alert(err.message);
+    });
+  });
+
+    // Инициализация
+    renderSelected();
+    renderList(allTags);
+  </script>
+</body>
+</html>

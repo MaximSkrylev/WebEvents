@@ -1,0 +1,91 @@
+<!-- File: upload_media.html -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Загрузка медиа</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      background-color: #00887A;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    .main-container {
+      background-color: #ffffff;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+      margin-bottom: 390px;
+    }
+    .navbar {
+      background-color: #FCAF83 !important;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+    }
+    .slogan span:first-child {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .slogan {
+      display: inline-block;
+      font-family: 'Arial', sans-serif;
+      color: #00887A;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-left: 30px !important;
+    }
+    .btn-custom {
+      background-color: #00887A;
+      border-color: #00887A;
+      color: #fff;
+    }
+    h1, h2, h3 {
+      font-family: 'Bahnschrift', sans-serif;
+      color: #00887A;
+    }
+    .bottom-padding {
+      height: 50px;
+    }
+    .bottom-description {
+      background-color: #FCAF83;
+      height: 100px;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('administrator_dashboard') }}">
+          <img src="{{ url_for('static', filename='images/mylogo.png') }}" alt="Логотип" style="max-height: 100px;">
+          <span class="ms-2 slogan">
+            <span style="display:block;">EventPoint</span>
+            <span style="display:block;">Личный кабинет администратора</span>
+          </span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <h1>Загрузить новое изображение для слайдшоу</h1>
+      <form action="{{ url_for('upload_media') }}" method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="media" class="form-label">Выберите файл:</label>
+          <input type="file" class="form-control" id="media" name="media" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Загрузить</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="bottom-padding"></div>
+  <div class="bottom-description"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

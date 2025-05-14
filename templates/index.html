@@ -1,0 +1,617 @@
+<!-- Файл: index.html -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Главная страница</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+  <!-- Anime.js (если понадобится для анимаций) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <style>
+    /* Задаём зелёный фон для всей страницы */
+    body {
+      background-color: #00887A;
+    }
+    /* Основной контейнер с белым фоном и отступами */
+    .main-container {
+      background-color: #ffffff;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .navbar {
+      background-color: #FCAF83 !important;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+    }
+    .slogan span:first-child {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    /* Слайдшоу (верхняя часть) */
+    #carouselExample {
+      max-height: 600px;
+      max-width: 1000px;
+      width: 100%;
+      overflow: hidden;
+      margin: 50px auto;
+    }
+    .carousel-item {
+      height: 450px;
+    }
+    .carousel-item > .d-flex {
+      height: 100%;
+    }
+    .carousel-item img {
+      object-fit: contain;
+      max-height: 100%;
+      width: auto;
+    }
+    /* Список мероприятий */
+    #eventsListContainer {
+      height: 800px;
+      overflow-y: auto;
+    }
+    /* Карта */
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+    .slogan {
+      display: inline-block;
+      font-family: 'Arial', sans-serif;
+      color: #00887A;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-left: 30px !important;
+    }
+    .star-icon {
+      font-size: 1.2rem;
+      cursor: pointer;
+      user-select: none;
+      margin-left: 5px;
+    }
+    .star-not-favorite {
+      color: grey;
+    }
+    .star-favorite {
+      color: gold;
+    }
+    .bottom-padding {
+      height: 50px;
+    }
+    .bottom-description {
+      background-color: #FCAF83;
+      height: 100px;
+    }
+    .my-filter-group {
+      display: inline-flex;
+      flex-wrap: nowrap;
+      background-color: #FCAF83;
+      border-radius: 5px;
+      padding: 0;
+      white-space: normal;
+    }
+    .my-filter-group .btn-outline-primary {
+      border-color: gray !important;
+      color: gray !important;
+    }
+    .my-filter-group .btn-outline-primary:hover {
+      background-color: #00887A !important;
+      color: #fff !important;
+      border-color: #00887A !important;
+    }
+    .my-filter-group .btn-outline-primary.active {
+      background-color: #00887A !important;
+      border-color: #00887A !important;
+      color: #ffffff !important;
+    }
+    .my-filter-group, .my-filter-group .btn {
+      font-family: 'Bahnschrift', sans-serif;
+    }
+
+  </style>
+  <!-- Yandex.Maps API -->
+  <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+</head>
+<body>
+  <!-- Глобальные переменные из Flask -->
+  <script>
+    var user_role = "{{ current_user.role if current_user.is_authenticated else 'guest' }}";
+    var attended_ids = {{ attended_ids|tojson }};
+  </script>
+
+  <div class="main-container">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+          <img src="{{ url_for('static', filename='images/mylogo.png') }}" alt="Логотип" style="max-height: 100px;">
+          <span class="ms-2 slogan" style="font-family: 'Bahnschrift', sans-serif;">
+            <span style="display: block;">EventPoint</span>
+            <span style="display: block;">Наука, образование, информационные технологии</span>
+          </span>
+        </a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            {% if current_user.is_authenticated %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Личный кабинет</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Выйти</a></li>
+            {% else %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Вход</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Регистрация</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Слайдшоу -->
+    <div id="carouselExample" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+      <div class="carousel-inner">
+        {% if media_items %}
+          {% for media in media_items %}
+            <div class="carousel-item {% if loop.first %}active{% endif %}">
+              <div class="d-flex justify-content-center align-items-center" style="width: 100%; height: 100%;">
+                <img src="{{ media.image_url }}" alt="{{ media.caption }}" class="img-fluid">
+              </div>
+              {% if media.caption %}
+                <div class="carousel-caption d-none d-md-block">
+                  <h5>{{ media.caption }}</h5>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="carousel-item active">
+            <div class="d-flex justify-content-center align-items-center" style="width: 100%; height: 100%;">
+              <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="Заглушка" class="img-fluid">
+            </div>
+          </div>
+        {% endif %}
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Предыдущий</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Следующий</span>
+      </button>
+    </div>
+
+    <!-- Основной блок: список мероприятий и карта -->
+    <div id="mainBlock" class="container">
+      <div class="row">
+        <!-- Левая колонка: список мероприятий -->
+        <div class="col-md-4">
+          <input type="text" id="searchInput" class="form-control mb-3" placeholder="Поиск по названию...">
+          <div class="mb-3">
+            <div class="btn-group btn-group-sm my-filter-group" role="group" aria-label="Фильтр по сфере и избранное">
+              <button class="btn btn-outline-primary filter-btn" data-category="Все">Все</button>
+              <button class="btn btn-outline-primary filter-btn" data-category="Наука">Наука</button>
+              <button class="btn btn-outline-primary filter-btn" data-category="Образование">Образование</button>
+              <button class="btn btn-outline-primary filter-btn" data-category="Информационные технологии">
+                Информационные технологии
+              </button>
+              {% if current_user.is_authenticated %}
+                <button class="btn btn-outline-secondary filter-btn-fav" data-favorites="{{ '0' if favorites_filter=='1' else '1' }}">
+                  <span class="star-icon {% if favorites_filter == '1' %}star-favorite{% else %}star-not-favorite{% endif %}">★</span>
+                </button>
+              {% endif %}
+            </div>
+          </div>
+          <div id="eventsListContainer">
+            <div id="eventsList">
+              {% for event in events %}
+                <div class="card mb-3 event-item" data-id="{{ event.id }}" data-title="{{ event.title|lower }}" data-lat="{{ event.latitude }}" data-lng="{{ event.longitude }}">
+                  <div class="card-body">
+                    <h5 class="card-title" style="color:#00887A;">
+                      {{ event.title }}
+                      {% if event.in_progress %}
+                        <span class="badge"  style="background-color: #FCAF83; color: gray; font-size: 0.75rem; padding: 0.2em 0.4em;">Мероприятие в процессе</span>
+                      {% endif %}
+                    </h5>
+                    <p class="card-text">{{ event.description[:100] }}{% if event.description|length > 100 %}...{% endif %}</p>
+                    <p class="card-text"><small class="text-muted">{{ event.event_date }}</small></p>
+                    <p class="card-text"><small class="text-muted">Организатор: {{ event.organizer_name }}</small></p>
+                    <p class="card-text">
+                      {% for tag in event.tags %}
+                        <span class="badge bg-secondary">{{ tag }}</span>
+                      {% endfor %}
+                    </p>
+                    <a href="{{ url_for('event_detail', event_id=event.id) }}" class="btn btn-sm" style="background-color: #00887A; border-color: #00887A; color: #fff;">Подробнее</a>
+                    {% if current_user.is_authenticated and current_user.role == 'participant' and event.id in attended_ids %}
+                      <span class="badge bg-success">Вы записаны</span>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <!-- Правая колонка: карта -->
+        <div class="col-md-8">
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-padding"></div>
+  <div class="bottom-description"></div>
+
+  <!-- Скрипт для динамического поиска мероприятий -->
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('keyup', function () {
+      const filter = this.value.toLowerCase();
+      const eventItems = document.getElementsByClassName('event-item');
+      for (let i = 0; i < eventItems.length; i++) {
+        const title = eventItems[i].getAttribute('data-title');
+        eventItems[i].style.display = (title.indexOf(filter) > -1) ? '' : 'none';
+      }
+    });
+  </script>
+
+  <!-- Скрипты для Yandex.Maps с корректным смещением меток -->
+  <script>
+    var events = {{ events|tojson }};
+    var myMap;
+    var placemarksArray = [];
+
+    // Функция для создания метки с балуном
+    function createPlacemark(event, coords) {
+      var props = {
+        balloonContentHeader: event.title || "",
+        balloonContentBody: event.description ? event.description.substring(0, 100) + "..." : "",
+        event_category: event.category || "Не указана",
+        event_date: event.event_date || "Не указана",
+        organizer_name: event.organizer_name || "Не указан",
+        contacts: event.contacts || "Не указаны",
+        id: event.id,
+        file_thumbnail: event.file_thumbnail || null,
+        second_image: event.second_image || null,
+        third_image: event.third_image || null,
+        extra_images_count: event.extra_images_count || 0
+      };
+
+      let balloonHtml = `<h4>${props.balloonContentHeader}</h4>`;
+      if (props.file_thumbnail) {
+        balloonHtml += `<div style="display: flex; gap: 10px;">`;
+        balloonHtml += `
+          <div style="flex: 2;">
+            <img src="${props.file_thumbnail}" alt="Основное изображение" style="width: 100%; height: auto; object-fit: contain;">
+          </div>`;
+        balloonHtml += `<div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">`;
+        if (props.second_image) {
+          balloonHtml += `
+            <div style="flex: 1;">
+              <img src="${props.second_image}" alt="Изображение 1" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>`;
+        }
+        if (props.third_image) {
+          balloonHtml += `
+            <div style="flex: 1;">
+              <img src="${props.third_image}" alt="Изображение 2" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>`;
+        }
+        if (props.extra_images_count && props.extra_images_count > 0) {
+          balloonHtml += `
+            <div style="flex: 1; background: #888; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px;">
+              +${props.extra_images_count}
+            </div>`;
+        }
+        balloonHtml += `</div></div>`;
+      }
+      balloonHtml += `
+        <div style="margin-top: 10px;">
+          <p><strong>Сфера мероприятия:</strong> ${props.event_category}</p>
+          <p><strong>Дата:</strong> ${props.event_date}</p>
+          <p><strong>Организатор:</strong> ${props.organizer_name}</p>
+          <p><strong>Контакты:</strong> ${props.contacts}</p>
+          <p>${props.balloonContentBody}</p>
+          <a href="/event/${props.id}" class="btn btn-sm btn-primary" onclick="event.stopPropagation();" style="background-color: #00887A; border-color: #00887A; color: #fff;">Подробнее</a>
+        </div>`;
+
+      var balloonLayout = ymaps.templateLayoutFactory.createClass(balloonHtml);
+      var placemark = new ymaps.Placemark(coords, {}, {
+        preset: 'islands#icon',
+        iconColor: (event.event_format === 'online') ? 'green' : 'red',
+        balloonContentLayout: balloonLayout,
+        balloonAutoPan: true,
+        balloonMaxWidth: 400
+      });
+      placemark.properties.set('eventId', event.id);
+      placemark.events.add('mouseenter', function () {
+        placemark.balloon.open();
+        placemark.balloon.events.once('balloonopen', function () {
+          var balloonElem = placemark.balloon.getElement();
+          if (balloonElem) {
+            balloonElem.addEventListener('mouseleave', function() {
+              placemark.balloon.close();
+            });
+          }
+        });
+      });
+      placemark.events.add('click', function () {
+        window.location.href = "/event/" + props.id;
+      });
+      return placemark;
+    }
+
+    // Функция для открытия балуна метки при клике на карточку
+    function openEventOnMap(eventId, lat, lng) {
+      if (myMap) {
+        myMap.setCenter([lat, lng], 18, { duration: 1000 });
+        setTimeout(function() {
+          for (let i = 0; i < placemarksArray.length; i++) {
+            if (parseInt(placemarksArray[i].properties.get('eventId')) === eventId) {
+              placemarksArray[i].balloon.open();
+              break;
+            }
+          }
+        }, 1100);
+      }
+    }
+
+    // Инициализация карты с корректным смещением меток
+    function initMap() {
+      var center = [55.751244, 37.618423];
+      var groupedEvents = {};
+
+      // Группируем мероприятия: обязательно парсим координаты в числа
+      events.forEach(function(event) {
+        if (event.latitude && event.longitude) {
+          var lat = parseFloat(event.latitude);
+          var lng = parseFloat(event.longitude);
+          if (isNaN(lat) || isNaN(lng)) return;
+          var key = lat.toFixed(6) + ',' + lng.toFixed(6);
+          if (!groupedEvents[key]) {
+            groupedEvents[key] = [];
+          }
+          groupedEvents[key].push(event);
+        }
+      });
+
+      console.log("Grouped events:", groupedEvents); // Отладочный вывод
+
+      placemarksArray = [];
+      var placemarks = [];
+      // Используем offsetRadius = 0.001 (примерно 100 м)
+      var offsetRadius = 0.001;
+
+     for (var key in groupedEvents) {
+        var group = groupedEvents[key];
+        var baseCoords = key.split(',').map(Number);
+        if (group.length === 1) {
+            var placemark = createPlacemark(group[0], baseCoords);
+            placemarks.push(placemark);
+            placemarksArray.push(placemark);
+        } else {
+            // В зависимости от количества событий можно увеличить радиус смещения
+            var count = group.length;
+            // Например, базовый радиус 0.001 плюс дополнительное смещение 0.0003 за каждое событие сверх первого
+            var offsetRadius = 0.001 + (count - 1) * 0.0003;
+            for (var i = 0; i < count; i++) {
+                var angle = (2 * Math.PI / count) * i;
+                var offsetLat = baseCoords[0] + offsetRadius * Math.cos(angle);
+                var offsetLon = baseCoords[1] + offsetRadius * Math.sin(angle);
+                var eventClone = Object.assign({}, group[i]);
+                eventClone.latitude = offsetLat;
+                eventClone.longitude = offsetLon;
+                var placemark = createPlacemark(eventClone, [offsetLat, offsetLon]);
+                placemarks.push(placemark);
+                placemarksArray.push(placemark);
+            }
+        }
+    }
+
+
+      // Определяем центр карты – используем координаты первого мероприятия
+      for (var i = 0; i < events.length; i++) {
+        var lat = parseFloat(events[i].latitude);
+        var lng = parseFloat(events[i].longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          center = [lat, lng];
+          break;
+        }
+      }
+
+      myMap = new ymaps.Map("map", {
+        center: center,
+        zoom: 10
+      });
+
+      // Настраиваем кластеризатор с меньшим gridSize для более отдельного отображения меток
+      var clusterer = new ymaps.Clusterer({
+        preset: 'islands#invertedBlueClusterIcons',
+        clusterDisableClickZoom: false,
+        clusterOpenBalloonOnClick: true,
+        gridSize: 8
+      });
+
+      clusterer.add(placemarks);
+      myMap.geoObjects.add(clusterer);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      ymaps.ready(initMap);
+      const eventItems = document.getElementsByClassName("event-item");
+      for (let i = 0; i < eventItems.length; i++) {
+        eventItems[i].addEventListener("click", function(e) {
+          if (e.target.tagName.toLowerCase() !== "a") {
+            let lat = parseFloat(this.getAttribute("data-lat"));
+            let lng = parseFloat(this.getAttribute("data-lng"));
+            if (!isNaN(lat) && !isNaN(lng)) {
+              let eventId = parseInt(this.getAttribute("data-id"));
+              openEventOnMap(eventId, lat, lng);
+            }
+          }
+        });
+      }
+    });
+
+    // Функция для загрузки данных через API и обновления списка карточек мероприятий
+    let currentCategory = 'Все';
+    let favoritesFilter = '0';
+    let eventsData = [];
+
+    function fetchEvents() {
+      const url = `/api/events?category=${encodeURIComponent(currentCategory)}&favorites=${favoritesFilter}`;
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          eventsData = data;
+          updateEventsList();
+          updateMapMarkers();
+        })
+        .catch(error => console.error('Ошибка загрузки событий:', error));
+    }
+
+    function updateEventsList() {
+      const eventsListContainer = document.getElementById('eventsList');
+      eventsListContainer.innerHTML = "";
+      eventsData.forEach(event => {
+        const card = document.createElement('div');
+        card.className = 'card mb-3 event-item';
+        card.setAttribute('data-id', event.id);
+        card.setAttribute('data-title', event.title.toLowerCase());
+        card.setAttribute('data-lat', event.latitude);
+        card.setAttribute('data-lng', event.longitude);
+
+        let inProgressBadge = event.in_progress ? '<span class="badge"  style="background-color: #FCAF83; color: gray; font-size: 0.75rem; padding: 0.2em 0.4em;">Мероприятие в процессе</span>' : '';
+        let registeredBadge = "";
+        if(user_role === 'participant' && attended_ids.includes(event.id)){
+            registeredBadge = '<span class="badge bg-success ms-1">Вы записаны</span>';
+        }
+
+        card.innerHTML = `
+          <div class="card-body">
+            <h5 class="card-title" style="color:#00887A;">
+              ${event.title}
+              ${inProgressBadge}
+            </h5>
+            <p class="card-text">${event.description.substring(0, 100)}${(event.description.length > 100) ? '...' : ''}</p>
+            <p class="card-text"><small class="text-muted">${event.event_date}</small></p>
+            <p class="card-text"><small class="text-muted">Организатор: ${event.organizer_name}</small></p>
+            <p class="card-text">
+              ${event.tags.map(tag => `<span class="badge bg-secondary">${tag}</span>`).join(' ')}
+            </p>
+            <a href="/event/${event.id}" class="btn btn-sm" style="background-color: #00887A; border-color: #00887A; color: #fff;">Подробнее</a>
+            ${registeredBadge}
+          </div>
+        `;
+        card.addEventListener('click', function(e) {
+          if (e.target.tagName.toLowerCase() !== 'a') {
+            let lat = parseFloat(this.getAttribute('data-lat'));
+            let lng = parseFloat(this.getAttribute('data-lng'));
+            if (!isNaN(lat) && !isNaN(lng)) {
+              openEventOnMap(parseInt(this.getAttribute('data-id')), lat, lng);
+            }
+          }
+        });
+        eventsListContainer.appendChild(card);
+      });
+    }
+
+    function updateMapMarkers() {
+      if (myMap && placemarksArray) {
+        myMap.geoObjects.removeAll();
+        placemarksArray = [];
+        let placemarks = [];
+
+        // Группируем события, как в initMap:
+        let groupedEvents = {};
+        eventsData.forEach(function(event) {
+          if (event.latitude && event.longitude) {
+            let lat = parseFloat(event.latitude);
+            let lng = parseFloat(event.longitude);
+            if (isNaN(lat) || isNaN(lng)) return;
+            let key = lat.toFixed(6) + ',' + lng.toFixed(6);
+            if (!groupedEvents[key]) {
+              groupedEvents[key] = [];
+            }
+            groupedEvents[key].push(event);
+          }
+        });
+
+        // Создаём метки с смещением для групп с более чем 1 событием:
+        for (let key in groupedEvents) {
+          let group = groupedEvents[key];
+          let baseCoords = key.split(',').map(Number);
+         // При группировке событий с одинаковыми координатами
+          if (group.length === 1) {
+              let placemark = createPlacemark(group[0], baseCoords);
+              placemarks.push(placemark);
+              placemarksArray.push(placemark);
+          } else {
+              let count = group.length;
+              // Базовое смещение 0.0001 + дополнительное 0.00001 на каждое событие сверх первого
+              let offsetRadius = 0.0001 + (count - 1) * 0.00001;
+              for (let i = 0; i < count; i++) {
+                  let angle = (2 * Math.PI / count) * i;
+                  let offsetLat = baseCoords[0] + offsetRadius * Math.cos(angle);
+                  let offsetLon = baseCoords[1] + offsetRadius * Math.sin(angle);
+                  let eventClone = Object.assign({}, group[i]);
+                  eventClone.latitude = offsetLat;
+                  eventClone.longitude = offsetLon;
+                  let placemark = createPlacemark(eventClone, [offsetLat, offsetLon]);
+                  placemarks.push(placemark);
+                  placemarksArray.push(placemark);
+              }
+          }
+        }
+
+        // Создаём кластеризатор и добавляем метки:
+        let clusterer = new ymaps.Clusterer({
+          preset: 'islands#invertedBlueClusterIcons',
+          clusterDisableClickZoom: false,
+          clusterOpenBalloonOnClick: true,
+          gridSize: 8
+        });
+        clusterer.add(placemarks);
+        myMap.geoObjects.add(clusterer);
+      }
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentCategory = this.getAttribute('data-category');
+        fetchEvents();
+      });
+    });
+
+    const favBtn = document.querySelector('.filter-btn-fav');
+    if (favBtn) {
+      favBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        favoritesFilter = (favoritesFilter === '0') ? '1' : '0';
+        this.setAttribute('data-favorites', favoritesFilter);
+        const star = this.querySelector('.star-icon');
+        if (favoritesFilter === '1') {
+          star.classList.remove('star-not-favorite');
+          star.classList.add('star-favorite');
+        } else {
+          star.classList.remove('star-favorite');
+          star.classList.add('star-not-favorite');
+        }
+        fetchEvents();
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      fetchEvents();
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
+</body>
+</html>

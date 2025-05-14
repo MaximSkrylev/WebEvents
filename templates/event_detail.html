@@ -1,0 +1,598 @@
+<!-- File: event_detail.html -->
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <title>Детали мероприятия</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <style>
+      body {
+        background-color: #00887A;
+      }
+      /* Основной контейнер с белым фоном и отступами */
+      .main-container {
+        background-color: #ffffff;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      /* Навигация – персиковый фон */
+      .navbar {
+        background-color: #FCAF83 !important;
+      }
+      .navbar-brand {
+        display: flex;
+        align-items: center;
+      }
+      .slogan {
+        display: inline-block;
+        font-family: 'Arial', sans-serif;
+        color: #00887A;
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-left: 30px !important;
+      }
+      /* Стили изображений мероприятия */
+      .main-image {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        cursor: pointer;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
+      .small-square-wrapper {
+        width: 100%;
+        height: 150px;
+        position: relative;
+        margin-bottom: 15px;
+        cursor: pointer;
+        overflow: hidden;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .small-square-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(136, 136, 136, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 24px;
+        border-radius: 4px;
+      }
+      /* Стили для модального оверлея (Lightbox с Carousel) */
+      #lightboxOverlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 1050;
+      }
+      #lightboxOverlay .carousel-item {
+        height: 100%;
+      }
+      #lightboxOverlay .modal-img {
+        width: 100%;
+        height: calc(100vh - 100px);
+        object-fit: contain;
+      }
+      #lightboxClose {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        font-size: 2rem;
+        color: #fff;
+        cursor: pointer;
+        z-index: 1060;
+      }
+      /* Стили для звездочек избранного */
+      .star-icon {
+        font-size: 1.2rem;
+        cursor: pointer;
+        user-select: none;
+        margin-left: 5px;
+      }
+      .star-not-favorite {
+        color: grey;
+      }
+      .star-favorite {
+        color: gold;
+      }
+      /* Отображение тегов в строку */
+      .tag-item {
+        display: inline-block;
+        margin-right: 10px;
+      }
+      /* Нижние декоративные элементы */
+      .bottom-padding {
+        height: 50px;
+      }
+      .bottom-description {
+        background-color: #FCAF83;
+        height: 100px;
+      }
+          .slogan span:first-child {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="main-container">
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+          <img src="{{ url_for('static', filename='images/mylogo.png') }}" alt="Логотип" style="max-height: 100px;">
+          <span class="ms-2 slogan" style="font-family: 'Bahnschrift', sans-serif;">
+            <span style="display: block;">EventPoint</span>
+            <span style="display: block;">Наука, образование, информационные технологии</span>
+          </span>
+        </a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            {% if current_user.is_authenticated %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Личный кабинет</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Выйти</a></li>
+            {% else %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Вход</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}" style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Регистрация</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Основной контент мероприятия -->
+    <div class="container mt-4">
+      <h1>{{ event.title }}</h1>
+      <p><strong>Дата и время:</strong> {{ event.event_date }}</p>
+      <p><strong>Сфера мероприятия:</strong> {{ event.category or "Не указана" }}</p>
+      <p><strong>Формат:</strong> {{ event.event_format }}</p>
+      <p><strong>Место проведения:</strong> {{ event.location }}</p>
+      <p><strong>Описание:</strong><br>{{ event.description }}</p>
+      <p><strong>Продолжительность (в минутах):</strong> {{ event.duration }}</p>
+      <p><strong>Контакты:</strong> {{ event.contacts }}</p>
+
+      {% if event.images and event.images|length > 0 %}
+        <script>
+          const eventImages = {{ event.images|default([])|tojson }};
+        </script>
+        <div class="row">
+          <div class="col-md-8">
+            <img src="{{ event.images[0] }}" alt="Основное изображение" class="main-image" onclick="openCarouselOverlay(eventImages, 0)">
+          </div>
+          <div class="col-md-4 d-flex flex-column gap-2">
+            {% if event.images|length > 1 %}
+              <div class="small-square-wrapper" onclick="openCarouselOverlay(eventImages, 1)">
+                <img src="{{ event.images[1] }}" alt="Изображение 2" class="small-square-img">
+              </div>
+            {% endif %}
+            {% if event.images|length > 2 %}
+              <div class="small-square-wrapper" onclick="openCarouselOverlay(eventImages, 2)">
+                <img src="{{ event.images[2] }}" alt="Изображение 3" class="small-square-img">
+              </div>
+            {% endif %}
+            {% if event.images|length > 3 %}
+              <div class="small-square-wrapper" onclick="openCarouselOverlay(eventImages, 3)">
+                <img src="{{ event.images[3] }}" alt="Дополнительное изображение" class="small-square-img">
+                <div class="overlay">+{{ event.images|length - 3 }}</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if event.tags %}
+        {% set fav_names = current_user.favorite_tags|map(attribute='name')|list %}
+        <p class="mt-3"><strong>Теги:</strong>
+          {% for tag in event.tags %}
+            <span class="tag-item">
+              {{ tag }}
+              {% if current_user.is_authenticated and current_user.role == 'participant' %}
+                <span
+                  class="star-icon {{ 'star-favorite' if tag in fav_names else 'star-not-favorite' }}"
+                  data-tag="{{ tag }}"
+                  onclick="toggleFavoriteTag('{{ tag }}', this)"
+                >★</span>
+              {% endif %}
+            </span>
+          {% endfor %}
+        </p>
+      {% endif %}
+
+      {% if current_user.is_authenticated and current_user.role == 'participant' %}
+        <p><strong>Организатор:</strong>
+           <a href="{{ url_for('profile', user_id=event.organizer_id) }}">{{ event.organizer_name }}</a>
+          {% if event.organizer_name and event.organizer_id %}
+            <span class="star-icon {% if event.organizer_id in (current_user.favorite_organizers | map(attribute='id') | list) %}star-favorite{% else %}star-not-favorite{% endif %}"
+                  data-organizer="{{ event.organizer_id }}"
+                  onclick="toggleFavoriteOrganizer({{ event.organizer_id }}, this)">★</span>
+          {% endif %}
+        </p>
+        <p><strong>Участников записалось:</strong> {{ event.attendees_count }}</p>
+      {% else %}
+        <p><strong>Организатор:</strong> {{ event.organizer_name }}</p>
+        <p><strong>Участников записалось:</strong> {{ event.attendees_count }}</p>
+      {% endif %}
+
+      {% if current_user.is_authenticated and current_user.role == 'participant' %}
+        {% if event.active %}
+          {% set attending_ids = current_user.attended_events | map(attribute='id') | list %}
+          <form action="{{ url_for('toggle_attendance', event_id=event.id) }}" method="post" class="d-flex align-items-center">
+            {% if event.id in attending_ids %}
+              <button type="submit" class="btn btn-danger" style="background-color: #FCAF83; border-color: #FCAF83; color: #000;">Отменить запись </button>
+            {% else %}
+              <button type="submit" class="btn btn-success" style="background-color: #D3E3FC; border-color: #D3E3FC; color: #000;">Собираюсь посетить</button>
+            {% endif %}
+            {% if event.id in attending_ids %}
+              {% if current_user.is_authenticated and current_user.role == 'participant' %}
+              <!-- Кнопка для открытия модального окна приглашения друзей -->
+              <button type="button" class="btn btn-info ms-2" data-bs-toggle="modal" data-bs-target="#inviteModal" style="background-color: #D3E3FC; border-color: #D3E3FC; color: #000;">
+                Пригласить друга
+              </button>
+              {% endif %}
+            {% endif %}
+          </form>
+        {% else %}
+          <p class="text-muted"><strong>Мероприятие завершилось.</strong> Регистрация и приглашения недоступны.</p>
+        {% endif %}
+      {% endif %}
+
+      <a href="{{ url_for('index') }}" class="btn btn-primary mt-3" style="background-color: #00887A; border-color: #00887A; color: #fff;">Вернуться</a>
+    </div>
+
+    <!-- Оверлей для просмотра изображений (Lightbox с Carousel) -->
+    <div id="lightboxOverlay">
+      <div id="lightboxClose" onclick="closeCarouselOverlay()">×</div>
+      <div id="carouselOverlay" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner" id="overlayCarouselInner">
+          <!-- Слайды будут сформированы динамически через JS -->
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselOverlay" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Предыдущий</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselOverlay" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Следующий</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Модальное окно для приглашения друзей -->
+    <script>
+      // Передаём список участников (ID) в JS
+      const attendeesIds = {{ attendees_ids|tojson }};
+    </script>
+
+    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="inviteModalLabel">Пригласить друга</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+          </div>
+          <div class="modal-body">
+            <ul class="list-group" id="friendsList">
+              {% if current_user.is_authenticated %}
+                {% for friend in current_user.friends.all() %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center" data-friend-id="{{ friend.id }}">
+                    {{ friend.name }}
+                    <!-- Всегда рендерим кнопку, затем обновляем её через JS -->
+                    <button class="btn btn-sm invite-btn" data-friend-id="{{ friend.id }}">
+                      Отправить приглашение
+                    </button>
+                  </li>
+                {% endfor %}
+              {% endif %}
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="background-color: #D3E3FC; border-color: #D3E3FC; color: #000;">Закрыть</button>
+          </div>
+        </div>
+      </div>
+    </div>
+      </div>
+
+
+    <!-- Скрипты Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      function openCarouselOverlay(images, startIndex) {
+        if (!images || !Array.isArray(images) || images.length === 0) return;
+        const carouselInner = document.getElementById('overlayCarouselInner');
+        carouselInner.innerHTML = "";
+        for (let i = 0; i < images.length; i++) {
+          const slide = document.createElement("div");
+          slide.className = "carousel-item" + (i === startIndex ? " active" : "");
+          slide.innerHTML = `<img src="${images[i]}" class="d-block w-100 modal-img" alt="Фото ${i+1}">`;
+          carouselInner.appendChild(slide);
+        }
+        document.getElementById('lightboxOverlay').style.display = "block";
+      }
+      function closeCarouselOverlay() {
+        document.getElementById('lightboxOverlay').style.display = "none";
+      }
+      // Функции для переключения избранного для тегов
+      function toggleFavoriteTag(tag, el) {
+        const isFavorite = el.classList.contains('star-favorite');
+        const url = isFavorite ? `/remove_favorite_tag/${tag}` : `/add_favorite_tag/${tag}`;
+        fetch(url, { method: 'POST' })
+          .then(response => response.text())
+          .then(data => {
+            el.classList.toggle('star-favorite');
+            el.classList.toggle('star-not-favorite');
+          })
+          .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Ошибка при обновлении избранного.');
+          });
+      }
+      // Функции для переключения избранного для организатора
+      function toggleFavoriteOrganizer(organizerId, el) {
+        const isFavorite = el.classList.contains('star-favorite');
+        const url = isFavorite ? `/remove_favorite_organizer/${organizerId}` : `/add_favorite_organizer/${organizerId}`;
+        fetch(url, { method: 'POST' })
+          .then(response => response.text())
+          .then(data => {
+            el.classList.toggle('star-favorite');
+            el.classList.toggle('star-not-favorite');
+          })
+          .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Ошибка при обновлении избранного.');
+          });
+      }
+    </script>
+
+    <!-- Скрипты для Yandex.Maps (оставляем без изменений) -->
+    <script>
+      var events = {{ events|default([])|tojson }};
+      var myMap;
+      var placemarksArray = [];
+      function initMap() {
+        var center = [55.751244, 37.618423];
+        var groupedEvents = {};
+        events.forEach(function(event) {
+          if (event.latitude && event.longitude) {
+            var key = event.latitude.toFixed(6) + ',' + event.longitude.toFixed(6);
+            if (!groupedEvents[key]) {
+              groupedEvents[key] = [];
+            }
+            groupedEvents[key].push(event);
+          }
+        });
+        placemarksArray = [];
+        var placemarks = [];
+        var offsetRadius = 0.0001;
+        for (var key in groupedEvents) {
+          var group = groupedEvents[key];
+          var baseCoords = key.split(',').map(Number);
+          if (group.length === 1) {
+            var placemark = createPlacemark(group[0], baseCoords);
+            placemarks.push(placemark);
+            placemarksArray.push(placemark);
+          } else {
+            var count = group.length;
+            for (var i = 0; i < count; i++) {
+              var angle = (2 * Math.PI / count) * i;
+              var offsetLat = baseCoords[0] + offsetRadius * Math.cos(angle);
+              var offsetLon = baseCoords[1] + offsetRadius * Math.sin(angle);
+              var eventClone = Object.assign({}, group[i]);
+              eventClone.latitude = offsetLat;
+              eventClone.longitude = offsetLon;
+              var placemark = createPlacemark(eventClone, [offsetLat, offsetLon]);
+              placemarks.push(placemark);
+              placemarksArray.push(placemark);
+            }
+          }
+        }
+        for (var i = 0; i < events.length; i++) {
+          if (events[i].latitude && events[i].longitude) {
+            center = [events[i].latitude, events[i].longitude];
+            break;
+          }
+        }
+        myMap = new ymaps.Map("map", {
+          center: center,
+          zoom: 10
+        });
+        var clusterer = new ymaps.Clusterer({
+          preset: 'islands#invertedBlueClusterIcons',
+          clusterDisableClickZoom: false,
+          clusterOpenBalloonOnClick: true
+        });
+        clusterer.add(placemarks);
+        myMap.geoObjects.add(clusterer);
+      }
+      function createPlacemark(event, coords) {
+        var props = {
+          balloonContentHeader: event.title || "",
+          balloonContentBody: event.description ? event.description.substring(0, 100) + "..." : "",
+          event_date: event.event_date || "Не указана",
+          organizer_name: event.organizer_name || "Не указан",
+          contacts: event.contacts || "Не указаны",
+          id: event.id,
+          file_thumbnail: event.file_thumbnail || null,
+          second_image: event.second_image || null,
+          third_image: event.third_image || null,
+          extra_images_count: event.extra_images_count || 0
+        };
+        let balloonHtml = `<h4>${props.balloonContentHeader}</h4>`;
+        let imagesHtml = "";
+        if (props.file_thumbnail) {
+          imagesHtml += `<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <div style="flex: 1; min-width: 200px;">
+              <img src="${props.file_thumbnail}" alt="Основное изображение" style="width: 100%; height: auto; display: block;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px; min-width: 100px;">`;
+          if (props.second_image) {
+            imagesHtml += `<img src="${props.second_image}" alt="Изображение" style="width: 100px; height: 100px; object-fit: cover;">`;
+          }
+          if (props.third_image) {
+            imagesHtml += `<img src="${props.third_image}" alt="Изображение" style="width: 100px; height: 100px; object-fit: cover;">`;
+          }
+          if (props.extra_images_count && props.extra_images_count > 0) {
+            imagesHtml += `<div style="width: 100px; height: 100px; background: #888; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px;">+${props.extra_images_count}</div>`;
+          }
+          imagesHtml += `</div></div>`;
+        }
+        if (imagesHtml) {
+          balloonHtml += imagesHtml;
+        }
+        balloonHtml += `
+          <div style="margin-top: 10px;">
+            <p><strong>Время проведения:</strong> ${props.event_date}</p>
+            <p><strong>Организатор:</strong> ${props.organizer_name}</p>
+            <p><strong>Контакты:</strong> ${props.contacts}</p>
+            <p>${props.balloonContentBody}</p>
+            <a href="/event/${props.id}" class="btn btn-sm btn-primary" onclick="event.stopPropagation();" style="background-color: #00887A; border-color: #00887A; color: #fff;">Подробнее</a>
+          </div>
+        `;
+        var balloonLayout = ymaps.templateLayoutFactory.createClass(balloonHtml);
+        var placemark = new ymaps.Placemark(coords, {}, {
+          preset: 'islands#icon',
+          iconColor: (event.event_format === 'online') ? 'green' : 'red',
+          balloonContentLayout: balloonLayout,
+          balloonAutoPan: true,
+          balloonMaxWidth: 400
+        });
+        placemark.properties.set('eventId', event.id);
+        placemark.events.add('mouseenter', function () {
+          placemark.balloon.open();
+          placemark.balloon.events.once('balloonopen', function () {
+            var balloonElem = placemark.balloon.getElement();
+            if (balloonElem) {
+              balloonElem.addEventListener('mouseleave', function() {
+                placemark.balloon.close();
+              });
+            }
+          });
+        });
+        placemark.events.add('click', function () {
+          window.location.href = "/event/" + props.id;
+        });
+        return placemark;
+      }
+      document.addEventListener("DOMContentLoaded", function() {
+        const eventItems = document.getElementsByClassName("event-item");
+        for (let i = 0; i < eventItems.length; i++) {
+          eventItems[i].addEventListener("click", function(e) {
+            if (e.target.tagName.toLowerCase() !== "a") {
+              let lat = parseFloat(this.getAttribute("data-lat"));
+              let lng = parseFloat(this.getAttribute("data-lng"));
+              if (!isNaN(lat) && !isNaN(lng)) {
+                let eventId = parseInt(this.getAttribute("data-id"));
+                openEventOnMap(eventId, lat, lng);
+              }
+            }
+          });
+        }
+      });
+      ymaps.ready(initMap);
+    </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const inviteButtons = document.querySelectorAll('.invite-btn');
+
+      inviteButtons.forEach(function(button) {
+        const friendId = parseInt(button.getAttribute('data-friend-id'));
+        const eventId = {{ event.id }};
+
+        // Запрашиваем статус приглашения для данного друга
+        fetch(`/check_invitation/${eventId}/${friendId}`)
+          .then(response => response.json())
+          .then(data => {
+            // Если друг уже участвует (его ID есть в списке участников attendeesIds)
+            if (attendeesIds.includes(friendId)) {
+              // Если статус принят, то показываем нужное сообщение с зелёным фоном
+              if (data.status === 'accepted') {
+                button.textContent = "Участник принял ваше приглашение";
+                button.className = "btn btn-sm btn-success";
+                button.disabled = true;
+              } else {
+                // Если просто друг участвует (без приглашения)
+                button.textContent = "Пользователь уже участвует";
+                button.className = "btn btn-sm btn-secondary";
+                button.disabled = true;
+              }
+            } else {
+              // Если друг не участвует, обновляем состояние кнопки по статусу приглашения
+              if (data.status === 'accepted') {
+                button.textContent = "Участник принял ваше приглашение";
+                // Изменено: используем btn-success вместо btn-danger для accepted
+                button.className = "btn btn-sm btn-success";
+                button.disabled = true;
+              } else if (data.status === 'rejected') {
+                button.textContent = "Участник отклонил ваше приглашение";
+                button.className = "btn btn-sm btn-danger";
+                button.disabled = true;
+              } else if (data.status === 'pending') {
+                button.textContent = "Приглашение отправлено";
+                button.className = "btn btn-sm btn-success";
+                // Добавляем обработчики для изменения текста при наведении
+                button.onmouseenter = () => { button.textContent = "Отменить приглашение"; };
+                button.onmouseleave = () => { button.textContent = "Приглашение отправлено"; };
+              } else if (data.status === 'none') {
+                button.textContent = "Отправить приглашение";
+                button.className = "btn btn-sm btn-outline-primary";
+                button.disabled = false;
+              }
+            }
+          });
+
+        // Обработка клика по кнопке приглашения
+        button.addEventListener('click', function() {
+          const friendId = parseInt(this.getAttribute('data-friend-id'));
+          const eventId = {{ event.id }};
+          fetch(`/invite_event/${eventId}/${friendId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+              if (data.error) {
+                alert(data.error);
+                // Если ошибка (например, друг уже записан на мероприятие) — скрываем кнопку
+                this.style.display = "none";
+              } else if (data.status === 'pending') {
+                this.textContent = "Приглашение отправлено";
+                this.className = "btn btn-sm btn-success";
+                this.onmouseenter = () => { this.textContent = "Отменить приглашение"; };
+                this.onmouseleave = () => { this.textContent = "Приглашение отправлено"; };
+              } else if (data.status === 'cancelled') {
+                this.textContent = "Отправить приглашение";
+                this.className = "btn btn-sm btn-outline-primary";
+                this.onmouseenter = null;
+                this.onmouseleave = null;
+              } else if (data.status === 'accepted') {
+                // Приглашение принято – обновляем текст и блокируем кнопку
+                this.textContent = "Участник принял ваше приглашение";
+                this.className = "btn btn-sm btn-success";
+                this.disabled = true;
+              } else if (data.status === 'rejected') {
+                this.textContent = "Участник отклонил ваше приглашение";
+                this.className = "btn btn-sm btn-danger";
+                this.disabled = true;
+              }
+            })
+            .catch(error => {
+              console.error('Ошибка:', error);
+              alert('Ошибка при обновлении приглашения.');
+            });
+        });
+      });
+    });
+    </script>
+  </body>
+</html>

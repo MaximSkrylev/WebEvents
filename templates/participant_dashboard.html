@@ -1,0 +1,329 @@
+<!-- File: participant_dashboard.html -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Личный кабинет участника</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      background-color: #00887A;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    .main-container {
+      background-color: #ffffff;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .navbar {
+      background-color: #FCAF83 !important;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+    }
+    .slogan span:first-child {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .slogan {
+      display: inline-block;
+      font-family: 'Arial', sans-serif;
+      color: #00887A;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-left: 30px !important;
+    }
+    .btn-custom {
+      background-color: #00887A;
+      border-color: #00887A;
+      color: #fff;
+    }
+    .custom-heading {
+      font-family: 'Bahnschrift', sans-serif;
+      font-size: 24px;
+    }
+    /* Контейнеры для списков */
+    .list-container {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    .no-results {
+      display: none;
+      text-align: center;
+      color: #666;
+      margin-top: 1rem;
+    }
+    .bottom-padding {
+      height: 50px;
+    }
+    .bottom-description {
+      background-color: #FCAF83;
+      height: 100px;
+    }
+    #currentAvatar {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      cursor: pointer;
+      border-radius: 12px;
+    }
+    .select-avatar {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 3px solid transparent;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+          <img src="{{ url_for('static', filename='images/mylogo.png') }}" alt="Логотип" style="max-height: 100px;">
+          <span class="ms-2 slogan" style="font-family: 'Bahnschrift', sans-serif;">
+            <span style="display: block;">EventPoint</span>
+            <span style="display: block;">Наука, образование, информационные технологии</span>
+          </span>
+        </a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('logout') }}"
+                 style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">Выйти</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <h1 style="margin-bottom: 20px; font-family: 'Bahnschrift', sans-serif; color: #00887A;">
+        Личный кабинет участника
+      </h1>
+
+      <!-- Фрагмент внутри <div class="container mt-4"> -->
+      <div class="d-flex align-items-center mb-4">
+        <!-- Аватар -->
+        <img id="currentAvatar"
+             src="{{ url_for('static', filename='images/' + current_user.avatar_filename) }}"
+             alt="Аватар"
+             data-bs-toggle="modal" data-bs-target="#avatarModal">
+
+        <!-- Информация -->
+        <div class="ms-4" style="flex:1; max-width:400px;">
+          <h3>{{ current_user.name }}</h3>
+          <p>Email: {{ current_user.email }}</p>
+          <p>Роль:
+            {% if current_user.role == 'participant' %}
+              Участник
+            {% elif current_user.role == 'organizer' %}
+              Организатор
+            {% else %}
+              {{ current_user.role }}
+            {% endif %}
+          </p>
+        </div>
+      </div>
+
+      <!-- Модальное окно выбора аватара -->
+      <div class="modal fade" id="avatarModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <form method="post" action="{{ url_for('update_avatar') }}">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Выберите аватар</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body d-flex flex-wrap justify-content-center">
+                {% set avatars = [
+                  'participant_avatar_none.png',
+                  'participant_avatar_man_1.png',
+                  'participant_avatar_man_2.png',
+                  'participant_avatar_man_3.png',
+                  'participant_avatar_woman_1.png',
+                  'participant_avatar_woman_2.png',
+                  'participant_avatar_woman_3.png'
+                ] %}
+                {% for av in avatars %}
+                  <div class="m-2 text-center">
+                    <img src="{{ url_for('static', filename='images/' + av) }}"
+                         data-filename="{{ av }}"
+                         class="select-avatar">
+                  </div>
+                {% endfor %}
+                <input type="hidden" name="avatar" id="avatarInput">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Поиск -->
+      <div class="mb-4" style="max-width:400px;">
+        <input type="text" id="participantEventSearchInput" class="form-control"
+               placeholder="Поиск по мероприятиям">
+      </div>
+
+      <div class="row">
+        <!-- Предстоящие -->
+        <div class="col-md-6">
+          <h2 class="custom-heading">Предстоящие мероприятия</h2>
+          <div id="upcomingList" class="list-container">
+            <p id="upcomingNoRes" class="no-results">Не найдено</p>
+            {% if upcoming_events %}
+              {% for event in upcoming_events %}
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ event.title }}</h5>
+                    <p class="card-text">{{ event.description[:100] }}{% if event.description|length > 100 %}...{% endif %}</p>
+                    <p class="card-text">
+                      <small class="text-muted">{{ event.event_date }}</small>
+                      {% if event.in_progress %}
+                        <span class="badge" style="background-color:#FCAF83; color:#000;">Мероприятие в процессе</span>
+                      {% endif %}
+                    </p>
+                    <a href="{{ url_for('event_detail', event_id=event.id) }}" class="btn btn-sm btn-custom">Подробнее</a>
+                    <form action="{{ url_for('toggle_attendance', event_id=event.id) }}" method="post" class="mt-2">
+                      <button type="submit" class="btn btn-danger" style="background-color:#77A6F7;border-color:#77A6F7;">
+                        Отменить запись
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p>У вас нет предстоящих мероприятий.</p>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Прошедшие -->
+        <div class="col-md-6">
+          <h2 class="custom-heading">Прошедшие мероприятия</h2>
+          <div id="pastList" class="list-container">
+            <p id="pastNoRes" class="no-results">Не найдено</p>
+            {% if past_events %}
+              {% for event in past_events %}
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ event.title }}</h5>
+                    <p class="card-text">{{ event.description[:100] }}{% if event.description|length > 100 %}...{% endif %}</p>
+                    <p class="card-text"><small class="text-muted">{{ event.event_date }}</small></p>
+                    <a href="{{ url_for('event_detail', event_id=event.id) }}" class="btn btn-sm btn-custom">Подробнее</a>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p>У вас нет прошедших мероприятий.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <h2 style="font-family: 'Bahnschrift', sans-serif; color: #00887A; margin-top: 1rem;">Друзья и настройки приватности</h2>
+      <p>
+        <a href="{{ url_for('find_friends') }}" class="btn" style="background-color: #D3E3FC; border-color: #D3E3FC; color: #000;">Найти друзей</a>
+        <a href="{{ url_for('friend_requests') }}" class="btn" style="background-color: #D3E3FC; border-color: #D3E3FC; color: #000;">
+          Заявки в друзья
+          {% set pending_friend_requests = current_user.received_requests | selectattr("status", "equalto", "pending") | list | length %}
+          {% if pending_friend_requests > 0 %}
+            <span class="badge bg-danger ms-2">{{ pending_friend_requests }}</span>
+          {% endif %}
+        </a>
+        <a href="{{ url_for('my_invitations') }}" class="btn" style="background-color: #D3E3FC; border-color: #D3E3FC; color: #000;">
+          Приглашения на мероприятия
+          {% set pending_invitations = current_user.received_invitations | selectattr("status", "equalto", "pending") | list | length %}
+          {% if pending_invitations > 0 %}
+            <span class="badge bg-danger">{{ pending_invitations }}</span>
+          {% endif %}
+        </a>
+      </p>
+
+      {% set friends = current_user.friends.all() %}
+      {% if friends %}
+        <ul class="list-group mb-3" style="max-width: 530px;">
+          {% for friend in friends %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <a href="{{ url_for('profile', user_id=friend.id) }}">{{ friend.name }}</a>
+              <form action="{{ url_for('remove_friend', friend_id=friend.id) }}" method="post" style="margin: 0;">
+                <button class="btn btn-sm" type="submit" style="background-color: #FCAF83; border-color: #D3E3FC; color: #000;">Удалить</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>У вас пока нет друзей.</p>
+      {% endif %}
+
+      <h3 style="font-family: 'Bahnschrift', sans-serif; color: #00887A;">Кто может видеть список моих мероприятий?</h3>
+      <form action="{{ url_for('update_visibility') }}" method="post">
+        <select name="visibility" class="form-select mb-2" required>
+          <option value="none" {% if current_user.events_visibility == 'none' %}selected{% endif %}>Никто</option>
+          <option value="all" {% if current_user.events_visibility == 'all' %}selected{% endif %}>Все</option>
+          <option value="friends" {% if current_user.events_visibility == 'friends' %}selected{% endif %}>Только друзья</option>
+        </select>
+        <button type="submit" class="btn btn-custom">Сохранить настройки</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="bottom-padding"></div>
+  <div class="bottom-description"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.getElementById("participantEventSearchInput")
+      .addEventListener("input", function() {
+        const filter = this.value.toLowerCase();
+
+        ['upcomingList','pastList'].forEach(listId => {
+          const container = document.getElementById(listId);
+          const cards = container.querySelectorAll('.card.mb-3');
+          let anyVisible = false;
+
+          cards.forEach(card => {
+            const title = card.querySelector('.card-title').textContent.toLowerCase();
+            if (title.includes(filter)) {
+              card.style.display = '';
+              anyVisible = true;
+            } else {
+              card.style.display = 'none';
+            }
+          });
+
+          const noResId = listId === 'upcomingList' ? 'upcomingNoRes' : 'pastNoRes';
+          document.getElementById(noResId).style.display = anyVisible ? 'none' : 'block';
+        });
+      });
+  </script>
+  <script>
+    document.querySelectorAll('.select-avatar').forEach(img => {
+      img.addEventListener('click', () => {
+        document.querySelectorAll('.select-avatar').forEach(i => i.style.borderColor = 'transparent');
+        img.style.borderColor = '#00888A';
+        document.getElementById('avatarInput').value = img.dataset.filename;
+      });
+    });
+    var avatarModal = document.getElementById('avatarModal');
+    avatarModal.addEventListener('show.bs.modal', () => {
+      const current = "{{ current_user.avatar_filename }}";
+      document.querySelectorAll('.select-avatar').forEach(img => {
+        img.style.borderColor = img.dataset.filename === current ? '#00888A' : 'transparent';
+      });
+      document.getElementById('avatarInput').value = current;
+    });
+  </script>
+</body>
+</html>

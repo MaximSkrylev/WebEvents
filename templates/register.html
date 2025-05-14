@@ -1,0 +1,165 @@
+<!-- Файл register.html  -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Регистрация</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+  <style>
+    /* Фон всей страницы – зелёный */
+    body {
+      background-color: #00887A;
+    }
+    /* Основной контейнер – белый фон, центрированный по ширине */
+    .main-container {
+      background-color: #ffffff;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    /* Навигация – персиковый фон */
+    .navbar {
+      background-color: #FCAF83 !important;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+    }
+    .slogan span:first-child {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .slogan {
+      display: inline-block;
+      font-family: 'Arial', sans-serif;
+      color: #00887A;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-left: 30px !important;
+    }
+    /* Кастомизация кнопки регистрации */
+    .btn-custom {
+      background-color: #00887A;
+      border-color: #00887A;
+      color: #fff;
+      margin-top: 1rem;
+    }
+    .form-control,
+    .form-select {
+      height: 28px;
+      padding: .2rem .5rem;
+      font-size: .9rem;
+    }
+    /* уменьшить margin между полями в форме */
+    form .mb-3 {
+      margin-bottom: .1rem !important;
+    }
+    /* увеличить картинку ролей */
+    #roleImage {
+      display: block;
+      margin: .5rem auto 0;
+      max-height: 320px;
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-container">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+          <img src="{{ url_for('static', filename='images/mylogo.png') }}" alt="Логотип" style="max-height: 100px;">
+          <span class="ms-2 slogan" style="font-family: 'Bahnschrift', sans-serif;">
+            <span style="display: block;">EventPoint</span>
+            <span style="display: block;">Наука, образование, информационные технологии</span>
+          </span>
+        </a>
+      </div>
+    </nav>
+
+  <!-- Основной контейнер с содержимым -->
+  <div class="main-container mt-3 d-flex flex-column align-items-center">
+  <h1 class="text-center mb-4" style="font-family: 'Bahnschrift', sans-serif; color: #00887A;">
+    Регистрация
+  </h1>
+
+    <!-- Вывод сообщений -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-warning">
+          <ul>
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% endwith %}
+
+      <form action="{{ url_for('register') }}" method="post" class="w-100" style="max-width: 400px;">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
+        <input type="email" class="form-control" name="email" id="email" required>
+      </div>
+      <div class="mb-3">
+        <label for="name" class="form-label">Имя:</label>
+        <input type="text" class="form-control" name="name" id="name" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Пароль:</label>
+        <input type="password" class="form-control" name="password" id="password" required>
+      </div>
+      <div class="mb-3">
+        <label for="role" class="form-label">Роль:</label>
+        <select class="form-select" name="role" id="role" onchange="toggleAccreditation(this.value)">
+          <option value="participant">Участник</option>
+          <option value="organizer">Организатор</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-custom w-100">Зарегистрироваться</button>
+    </form>
+    <p class="mt-3 text-center" style="max-width: 400px; width: 100%;">
+    Уже есть аккаунт? <a href="{{ url_for('login') }}">Войдите</a>
+  </p>
+    <div id="roleImageContainer">
+      <img id="roleImage"
+       src="{{ url_for('static', filename='images/participant_registration.png') }}"
+       alt="Регистрация участника">
+    </div>
+  </div>
+
+  <!-- Нижние декоративные элементы -->
+  <div class="bottom-padding"></div>
+
+  <script>
+    function toggleAccreditation(value) {
+      var div = document.getElementById('accreditationDiv');
+      if (div) {
+        div.style.display = (value === 'organizer') ? 'block' : 'none';
+      }
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+  <script>
+    function updateRoleImage() {
+      const role = document.getElementById('role').value;
+      const img  = document.getElementById('roleImage');
+      if (role === 'participant') {
+        img.src = "{{ url_for('static', filename='images/participant_registration.png') }}";
+        img.alt = "Регистрация участника";
+      } else {
+        img.src = "{{ url_for('static', filename='images/organizer_registration.png') }}";
+        img.alt = "Регистрация организатора";
+      }
+    }
+
+    // Привязываем событие и сразу выставляем начальную картинку
+    document.getElementById('role').addEventListener('change', updateRoleImage);
+    document.addEventListener('DOMContentLoaded', updateRoleImage);
+  </script>
+</body>
+</html>

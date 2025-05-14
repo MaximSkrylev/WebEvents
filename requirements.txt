@@ -1,0 +1,10 @@
+Flask
+Flask-Mail
+Flask-Login
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-Dance
+itsdangerous
+pytz
+requests
+psycopg2-binary

@@ -1,0 +1,452 @@
+<!-- File: administrator_dashboard.html -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Личный кабинет администратора</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+  <style>
+    .slogan {
+      display: inline-block;
+      font-family: 'Arial', sans-serif;
+      color: #00887A;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-left: 30px !important;
+    }
+    .slogan span:first-child {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .table-responsive {
+      max-height: 400px;
+    }
+    /* Стили для слайдшоу */
+    #mediaCarousel {
+      position: relative;
+      max-height: 400px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .carousel-item {
+      height: 400px;
+    }
+    .carousel-item img {
+      object-fit: contain;
+      width: 100%;
+      height: 100%;
+    }
+    .delete-media-btn {
+      text-align: right;
+      margin-top: 10px;
+    }
+    .upload-media-btn {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .admin-actions {
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .bottom-padding {
+      height: 50px;
+    }
+    .bottom-description {
+      background-color: #FCAF83;
+      height: 100px;
+    }
+    body {
+      background-color: #00887A;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    .main-container {
+      background-color: #ffffff;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .navbar {
+      background-color: #FCAF83 !important;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+    }
+    /* Стили панели тегов */
+    #tag-panel {
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      max-width: 600px;
+    }
+    #selected-tags .badge {
+      margin-right: 5px;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+    #tag-list {
+      max-height: 150px;
+      overflow-y: auto;
+      max-width: 400px;
+    }
+    #add-tag-btn {
+      display: inline-block;
+      max-height: 30px;
+    }
+    .modal-backdrop.show {
+      opacity: 0.5;
+    }
+        #userTable th:last-child,
+    #userTable td:last-child,
+    #adminTable th:last-child,
+    #adminTable td:last-child,
+    #eventTable th:last-child,
+    #eventTable td:last-child {
+      /* ширина в 1% заставит браузер «сжать» столбик ровно под содержимое */
+      width: 1%;
+      /* запрещаем перенос и лишние отступы внутри ячеек */
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+          <img src="{{ url_for('static', filename='images/mylogo.png') }}" alt="Логотип" style="max-height: 100px;">
+          <span class="ms-2 slogan" style="font-family: 'Bahnschrift', sans-serif;">
+            <span style="display: block;">EventPoint</span>
+            <span style="display: block;">Наука, образование, информационные технологии</span>
+          </span>
+        </a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('logout') }}"
+                 style="font-size: 20px; font-family: 'Bahnschrift', sans-serif;">
+                Выйти
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <h1 style="margin-bottom: 20px; font-family: 'Bahnschrift', sans-serif; color: #00887A;">
+        Личный кабинет администратора
+      </h1>
+
+      <!-- Слайдшоу с медиа -->
+      <div id="mediaCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-inner">
+          {% if media %}
+            {% for item in media %}
+              <div class="carousel-item {% if loop.first %}active{% endif %}" data-media-id="{{ item.id }}">
+                <img src="{{ item.image_url }}" class="d-block w-100" alt="{{ item.caption }}">
+                {% if item.caption %}
+                  <div class="carousel-caption d-none d-md-block">
+                    <h5>{{ item.caption }}</h5>
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="carousel-item active">
+              <img src="{{ url_for('static', filename='images/placeholder.jpg') }}"
+                   class="d-block w-100" alt="Заглушка">
+            </div>
+          {% endif %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#mediaCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Предыдущий</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#mediaCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Следующий</span>
+        </button>
+      </div>
+
+      <!-- Скрытая форма для мгновенной загрузки -->
+      <form id="uploadMediaForm" action="{{ url_for('upload_media') }}" method="post" enctype="multipart/form-data" style="display:none;">
+        <input type="file" id="mediaInput" name="media" accept="image/*">
+      </form>
+
+      <!-- Кнопка "Загрузить новое изображение" -->
+      <div class="upload-media-btn">
+        <button type="button" id="uploadMediaBtn" class="btn btn-info"
+                style="background-color: #D3E3FC; border-color: #8fb8f8; color: black;">
+          Загрузить новое изображение
+        </button>
+      </div>
+
+      <!-- Кнопка "Удалить текущее изображение" -->
+      <div class="delete-media-btn">
+        <form id="deleteMediaForm" action="" method="post">
+          <button type="submit" class="btn btn-sm btn-danger"
+                  style="background-color: #FCAF83; border-color: #d3917c; color: black;">
+            Удалить текущее изображение
+          </button>
+        </form>
+      </div>
+
+      <!-- Поиск и таблица участников/организаторов -->
+      <div class="mb-3 mt-4">
+        <input type="text" id="userSearchInput" class="form-control" placeholder="Поиск по пользователям (имя или email)">
+      </div>
+      <h2>Пользователи</h2>
+      <div class="table-responsive mb-4">
+        <table class="table table-bordered" id="userTable">
+          <thead>
+            <tr>
+              <th>Имя</th><th>Email</th><th>Роль</th>
+              <th>Дата регистрации</th><th>Видимость мероприятий</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users if user.role in ['participant','organizer'] %}
+              <tr>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.role }}</td>
+                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>{{ user.events_visibility }}</td>
+                <td>
+                  <a href="{{ url_for('edit_user', user_id=user.id) }}"
+                     class="btn btn-sm btn-primary"
+                     style="background-color: #d3d3d3; border-color: #6e6e6e; color: black;">
+                    Редактировать
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Админ‑действия -->
+      <div class="admin-actions text-center mb-4">
+        <a href="{{ url_for('accreditation_requests') }}"
+           class="btn btn-warning me-2"
+           style="background-color: #00887A; border-color: #005b51; color: #f7f7f7; position: relative;">
+          Заявки на аккредитацию
+          {% if accreditation_count and accreditation_count > 0 %}
+            <span class="badge bg-danger ms-2">{{ accreditation_count }}</span>
+          {% endif %}
+        </a>
+        <a href="{{ url_for('create_moderator') }}"
+           class="btn btn-success"
+           style="background-color: #00887A; border-color: #005b51; color: #f7f7f7;">
+          Создать модератора
+        </a>
+      </div>
+
+      <!-- Поиск и таблица модераторов/администраторов -->
+      <div class="mb-3">
+        <input type="text" id="adminSearchInput" class="form-control" placeholder="Поиск модераторов и администраторов">
+      </div>
+      <h2>Модераторы и администраторы</h2>
+      <div class="table-responsive mb-5">
+        <table class="table table-bordered" id="adminTable">
+          <thead>
+            <tr>
+              <th>Имя</th><th>Email</th><th>Роль</th>
+              <th>Дата регистрации</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users if user.role in ['moderator','administrator'] %}
+              <tr>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.role }}</td>
+                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                  <a href="{{ url_for('edit_user', user_id=user.id) }}"
+                     class="btn btn-sm btn-primary"
+                     style="background-color: #d3d3d3; border-color: #6e6e6e; color: black;">
+                    Редактировать
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Поиск мероприятий -->
+      <div class="mb-3 mt-4">
+        <input type="text" id="eventSearchInput" class="form-control" placeholder="Поиск мероприятий по названию">
+      </div>
+      <h2>Мероприятия</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered" id="eventTable">
+          <thead>
+            <tr>
+              <th>Название</th><th>Дата и время</th><th>Организатор</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for event in events %}
+              <tr>
+                <td>{{ event.title }}</td>
+                <td>{{ event.event_date }}</td>
+                <td>{{ event.organizer_name }}</td>
+                <td>
+                  <a href="{{ url_for('edit_event', event_id=event.id) }}"
+                     class="btn btn-sm btn-primary"
+                     style="background-color: #d3d3d3; border-color: #6e6e6e; color: black;">
+                    Редактировать
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Панель работы с тегами -->
+      <div class="mt-4 mb-5">
+        <label class="form-label">Теги</label>
+        <div class="d-flex mb-2" style="max-width: 400px;">
+          <input type="text" id="tag-search" class="form-control me-2" style="max-height: 30px; max-width: 268px;" placeholder="Поиск тегов">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            id="openAddTagModal"
+            style=" height: 30px; max-width: 400px; background-color: #D3E3FC; border-color: #8fb8f8; color: black; display: flex; align-items: center; justify-content: center; padding: 0 12px;" >
+            Добавить тег
+          </button>
+        </div>
+        <div id="tag-list" class="list-group">
+          {% for tag in all_tags %}
+            <div class="list-group-item">{{ tag }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-padding"></div>
+  <div class="bottom-description"></div>
+
+  <!-- Модальное окно добавления нового тега -->
+  <div class="modal fade" id="addTagModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Новый тег</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" id="new-tag-name" class="form-control" placeholder="Название тега">
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="save-new-tag" class="btn btn-primary">Добавить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Поиск по двум таблицам
+    function setupSearch(inputId, tableId) {
+      document.getElementById(inputId).addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll(`#${tableId} tbody tr`).forEach(row => {
+          row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+    }
+    setupSearch('userSearchInput',  'userTable');
+    setupSearch('adminSearchInput', 'adminTable');
+    setupSearch('eventSearchInput', 'eventTable');
+
+    // Оставшийся скрипт работы с тегами и медиа без изменений...
+    const CREATE_TAG_URL = "{{ url_for('create_tag') }}";
+    let allTags = {{ all_tags|tojson }};
+    const tagSearch = document.getElementById('tag-search');
+    const tagList   = document.getElementById('tag-list');
+    const addTagModal = new bootstrap.Modal(document.getElementById('addTagModal'));
+    const openModalBtn = document.getElementById('openAddTagModal');
+    const newTagInput  = document.getElementById('new-tag-name');
+    const saveBtn      = document.getElementById('save-new-tag');
+
+    function renderTagList(filter='') {
+      const q = filter.trim().toLowerCase();
+      tagList.innerHTML = '';
+      allTags
+        .filter(t => !q || t.toLowerCase().includes(q))
+        .forEach(t => {
+          const el = document.createElement('div');
+          el.className = 'list-group-item';
+          el.textContent = t;
+          tagList.append(el);
+        });
+    }
+
+    tagSearch.addEventListener('input', () => renderTagList(tagSearch.value));
+    openModalBtn.addEventListener('click', () => {
+      newTagInput.value = '';
+      addTagModal.show();
+    });
+    saveBtn.addEventListener('click', () => {
+      const name = newTagInput.value.trim();
+      if (!name) return alert('Введите имя тега');
+      if (allTags.some(t => t.toLowerCase() === name.toLowerCase())) return alert('Такой тег уже существует');
+      fetch(CREATE_TAG_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({name})
+      })
+      .then(r => r.json().then(body => ({ok:r.ok,body})))
+      .then(({ok,body}) => {
+        if (!ok) throw new Error(body.message||'Ошибка создания тега');
+        allTags.push(body.tag.name);
+        addTagModal.hide();
+        renderTagList(tagSearch.value);
+      })
+      .catch(e => alert(e.message));
+    });
+
+    renderTagList();
+  </script>
+  <script>
+  // Клик по кнопке «Загрузить новое изображение» открывает диалог выбора файла
+  document.getElementById('uploadMediaBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('mediaInput').click();
+  });
+
+  // Как только файл выбран — отправляем форму автоматически
+  document.getElementById('mediaInput').addEventListener('change', function() {
+    if (this.files.length) {
+      document.getElementById('uploadMediaForm').submit();
+    }
+  });
+  </script>
+  <script>
+    // "Базовый" URL удаления: из url_for('delete_media', media_id=0) убираем последний символ ("0")
+    const deleteBase = "{{ url_for('delete_media', media_id=0) }}".slice(0, -1);
+
+    // Обновляем action формы при инициализации и после каждого переключения слайда
+    function updateDeleteButton() {
+      const active = document.querySelector('#mediaCarousel .carousel-item.active');
+      if (!active) return;
+      const id = active.dataset.mediaId;
+      document.getElementById('deleteMediaForm').action = deleteBase + id;
+    }
+
+    document.addEventListener('DOMContentLoaded', updateDeleteButton);
+    document.getElementById('mediaCarousel')
+            .addEventListener('slid.bs.carousel', updateDeleteButton);
+  </script>
+</body>
+</html>
